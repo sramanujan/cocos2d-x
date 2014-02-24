@@ -13,6 +13,8 @@ then
 fi
 
 # paths
+CXX_GENERATOR_ROOT="/Users/srinath/Documents/bindings-generator"
+CLANG_ROOT="/Users/srinath/bin/clang+llvm-3.1"
 
 if [ -z "${NDK_ROOT+aaa}" ]; then
 # ... if NDK_ROOT is not set, use "$HOME/bin/android-ndk"

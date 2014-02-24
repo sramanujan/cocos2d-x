@@ -346,6 +346,10 @@ void CCSpriteFrameCache::removeSpriteFramesFromFile(const char* plist)
     std::string fullPath = CCFileUtils::sharedFileUtils()->fullPathForFilename(plist);
     CCDictionary* dict = CCDictionary::createWithContentsOfFileThreadSafe(fullPath.c_str());
 
+    if(dict == NULL)
+    {
+        return;
+    }
     removeSpriteFramesFromDictionary((CCDictionary*)dict);
 
     // remove it from the cache
