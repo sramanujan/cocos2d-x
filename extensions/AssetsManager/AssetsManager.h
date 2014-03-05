@@ -1,7 +1,6 @@
 /****************************************************************************
  Copyright (c) 2013 cocos2d-x.org
- Copyright (c) Microsoft Open Technologies, Inc.
-
+ 
  http://www.cocos2d-x.org
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,13 +25,12 @@
 #ifndef __AssetsManager__
 #define __AssetsManager__
 
-#include "cocos2d.h"
-#include "ExtensionMacros.h"
-
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WINRT) && (CC_TARGET_PLATFORM != CC_PLATFORM_WP8)
 #include <string>
 #include <curl/curl.h>
 #include <pthread.h>
+
+#include "cocos2d.h"
+#include "ExtensionMacros.h"
 
 NS_CC_EXT_BEGIN
 
@@ -42,8 +40,6 @@ class AssetsManagerDelegateProtocol;
  *  This class is used to auto update resources, such as pictures or scripts.
  *  The updated package should be a zip file. And there should be a file named
  *  version in the server, which contains version code.
- *  @js NA
- *  @lua NA
  */
 class AssetsManager
 {
@@ -77,7 +73,7 @@ public:
      * @param versionFileUrl URL of version file. It should contain version code of new package.
      * @param storagePath The path to store downloaded resources.
      */
-    AssetsManager(const char* packageUrl = NULL, const char* versionFileUrl = NULL, const char* storagePath = NULL);
+    AssetsManager(const char* packageUrl = NULL, const char* versionFileUrl = NULL, const char* storagePath = NULL, bool skip_version_check = false);
     
     virtual ~AssetsManager();
     
@@ -130,6 +126,10 @@ public:
     /** @brief Sets delegate, the delegate will receive messages
      */
     void setDelegate(AssetsManagerDelegateProtocol *delegate);
+    
+    /** @brief Gets delegate
+     */
+    AssetsManagerDelegateProtocol * getDelegate();
     
     /** @brief Sets connection time out in seconds
      */
@@ -187,6 +187,8 @@ private:
     std::string _packageUrl;
     std::string _versionFileUrl;
     
+    bool _skipVersionCheck;
+    
     std::string _downloadedVersion;
     
     CURL *_curl;
@@ -217,5 +219,5 @@ public:
 };
 
 NS_CC_EXT_END;
-#endif // CC_TARGET_PLATFORM != CC_PLATFORM_WINRT
+
 #endif /* defined(__AssetsManager__) */

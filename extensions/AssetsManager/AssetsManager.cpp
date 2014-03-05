@@ -25,10 +25,8 @@
 #include "AssetsManager.h"
 #include "cocos2d.h"
 
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WINRT) && (CC_TARGET_PLATFORM != CC_PLATFORM_WP8)
 #include <curl/curl.h>
 #include <curl/easy.h>
-
 #include <stdio.h>
 #include <vector>
 
@@ -45,17 +43,18 @@ using namespace std;
 
 NS_CC_EXT_BEGIN;
 
-#define KEY_OF_VERSION   "current-version-code"
-#define KEY_OF_DOWNLOADED_VERSION    "downloaded-version-code"
-#define TEMP_PACKAGE_FILE_NAME    "cocos2dx-update-temp-package.zip"
-#define BUFFER_SIZE    8192
-#define MAX_FILENAME   512
+#define DUMMY_TEXT                                      "jsk276334daghrts"
+#define KEY_OF_VERSION                                  "current-version-code"
+#define KEY_OF_DOWNLOADED_VERSION                       "downloaded-version-code"
+#define TEMP_PACKAGE_FILE_NAME                          "cocos2dx-update-temp-package.zip"
+#define BUFFER_SIZE                                     8192
+#define MAX_FILENAME                                    512
 
 // Message type
-#define ASSETSMANAGER_MESSAGE_UPDATE_SUCCEED                0
-#define ASSETSMANAGER_MESSAGE_RECORD_DOWNLOADED_VERSION     1
-#define ASSETSMANAGER_MESSAGE_PROGRESS                      2
-#define ASSETSMANAGER_MESSAGE_ERROR                         3
+#define ASSETSMANAGER_MESSAGE_UPDATE_SUCCEED            0
+#define ASSETSMANAGER_MESSAGE_RECORD_DOWNLOADED_VERSION 1
+#define ASSETSMANAGER_MESSAGE_PROGRESS                  2
+#define ASSETSMANAGER_MESSAGE_ERROR                     3
 
 // Some data struct for sending messages
 
@@ -73,11 +72,12 @@ struct ProgressMessage
 
 // Implementation of AssetsManager
 
-AssetsManager::AssetsManager(const char* packageUrl/* =NULL */, const char* versionFileUrl/* =NULL */, const char* storagePath/* =NULL */)
+AssetsManager::AssetsManager(const char* packageUrl/* =NULL */, const char* versionFileUrl/* =NULL */, const char* storagePath/* =NULL */, bool skip_version_check/* =false*/)
 :  _storagePath(storagePath)
 , _version("")
 , _packageUrl(packageUrl)
 , _versionFileUrl(versionFileUrl)
+, _skipVersionCheck(skip_version_check)
 , _downloadedVersion("")
 , _curl(NULL)
 , _tid(NULL)
@@ -114,14 +114,18 @@ static size_t getVersionCode(void *ptr, size_t size, size_t nmemb, void *userdat
 
 bool AssetsManager::checkUpdate()
 {
-    if (_versionFileUrl.size() == 0) return false;
-    
-    _curl = curl_easy_init();
-    if (! _curl)
-    {
-        CCLOG("can not init curl");
-        return false;
+    if (!_curl) {
+        _curl = curl_easy_init();
+        if (! _curl)
+        {
+            CCLOG("can not init curl");
+            return false;
+        }
     }
+
+    if(_skipVersionCheck) return true;
+    
+    if (_versionFileUrl.size() == 0) return false;
     
     // Clear _version before assign new value.
     _version.clear();
@@ -203,7 +207,7 @@ void AssetsManager::update()
     
     // 1. Urls of package and version should be valid;
     // 2. Package should be a zip file.
-    if (_versionFileUrl.size() == 0 ||
+    if ((_skipVersionCheck == false && _versionFileUrl.size() == 0) ||
         _packageUrl.size() == 0 ||
         std::string::npos == _packageUrl.find(".zip"))
     {
@@ -215,7 +219,11 @@ void AssetsManager::update()
     if (! checkUpdate()) return;
     
     // Is package already downloaded?
-    _downloadedVersion = CCUserDefault::sharedUserDefault()->getStringForKey(KEY_OF_DOWNLOADED_VERSION);
+    if(_skipVersionCheck == false) {
+        _downloadedVersion = CCUserDefault::sharedUserDefault()->getStringForKey(KEY_OF_DOWNLOADED_VERSION);
+    } else {
+        _downloadedVersion = DUMMY_TEXT;
+    }
     
     _tid = new pthread_t();
     pthread_create(&(*_tid), NULL, assetsManagerDownloadAndUncompress, this);
@@ -224,11 +232,12 @@ void AssetsManager::update()
 bool AssetsManager::uncompress()
 {
     // Open the zip file
-    string outFileName = _storagePath + TEMP_PACKAGE_FILE_NAME;
+    string fileName = _packageUrl.substr(_packageUrl.find_last_of("/") + 1);
+    string outFileName = _storagePath + fileName;
     unzFile zipfile = unzOpen(outFileName.c_str());
     if (! zipfile)
     {
-        CCLOG("can not open downloaded zip file %s", outFileName.c_str());
+        CCLOG("PUSPESH :: can not open downloaded zip file %s", outFileName.c_str());
         return false;
     }
     
@@ -398,15 +407,18 @@ int assetsManagerProgressFunc(void *ptr, double totalToDownload, double nowDownl
     
     manager->_schedule->sendMessage(msg);
     
-    CCLOG("downloading... %d%%", (int)(nowDownloaded/totalToDownload*100));
-    
+    //CCLOG("downloading... %d%%", (int)(nowDownloaded/totalToDownload*100));
+
     return 0;
 }
 
 bool AssetsManager::downLoad()
 {
     // Create a file to save package.
-    string outFileName = _storagePath + TEMP_PACKAGE_FILE_NAME;
+    CCLOG("PUSPESH ::: Downloading from %s", _packageUrl.c_str());
+    
+    string fileName = _packageUrl.substr(_packageUrl.find_last_of("/") + 1);
+    string outFileName = _storagePath + fileName;
     FILE *fp = fopen(outFileName.c_str(), "wb");
     if (! fp)
     {
@@ -418,11 +430,14 @@ bool AssetsManager::downLoad()
     // Download pacakge
     CURLcode res;
     curl_easy_setopt(_curl, CURLOPT_URL, _packageUrl.c_str());
+    curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER , false);
+    curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYHOST , false);
     curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, downLoadPackage);
     curl_easy_setopt(_curl, CURLOPT_WRITEDATA, fp);
     curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, false);
     curl_easy_setopt(_curl, CURLOPT_PROGRESSFUNCTION, assetsManagerProgressFunc);
     curl_easy_setopt(_curl, CURLOPT_PROGRESSDATA, this);
+    
     res = curl_easy_perform(_curl);
     curl_easy_cleanup(_curl);
     if (res != 0)
@@ -483,6 +498,11 @@ void AssetsManager::deleteVersion()
 void AssetsManager::setDelegate(AssetsManagerDelegateProtocol *delegate)
 {
     _delegate = delegate;
+}
+
+AssetsManagerDelegateProtocol * AssetsManager::getDelegate()
+{
+    return _delegate;
 }
 
 void AssetsManager::setConnectionTimeout(unsigned int timeout)
@@ -599,14 +619,14 @@ void AssetsManager::Helper::handleUpdateSucceed(Message *msg)
     manager->setSearchPath();
     
     // Delete unloaded zip file.
-    string zipfileName = manager->_storagePath + TEMP_PACKAGE_FILE_NAME;
+    string fileName = manager->_packageUrl.substr(manager->_packageUrl.find_last_of("/") + 1);
+    string zipfileName = manager->_storagePath + fileName;
     if (remove(zipfileName.c_str()) != 0)
     {
         CCLOG("can not remove downloaded zip file %s", zipfileName.c_str());
     }
     
-    if (manager) manager->_delegate->onSuccess();
+    if (manager->_delegate) manager->_delegate->onSuccess();
 }
 
 NS_CC_EXT_END;
-#endif // CC_PLATFORM_WINRT
