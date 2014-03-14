@@ -329,10 +329,8 @@ public:
                 return false;
             }
             CURLcode code = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, responseCode);
-            if (code != CURLE_OK || *responseCode != 200) {
-                CCLOG("HTTPCLIENT CURL FAILED WITH CODE - %d", code);
-                return false;     
-            }
+            if (code != CURLE_OK || *responseCode != 200)
+                return false;
         } catch (...) {
             CCLOG("HTTPCLIENT CURL EXCEPTION!!");
         }
