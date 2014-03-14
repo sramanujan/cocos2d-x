@@ -323,12 +323,19 @@ public:
     /// @param responseCode Null not allowed
     bool perform(int *responseCode)
     {
-        if (CURLE_OK != curl_easy_perform(m_curl))
-            return false;
-        CURLcode code = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, responseCode);
-        if (code != CURLE_OK || *responseCode != 200)
-            return false;
-        
+        try {
+            if (CURLE_OK != curl_easy_perform(m_curl)) {
+                CCLOG("HTTPCLIENT CURL FAILED!");
+                return false;
+            }
+            CURLcode code = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, responseCode);
+            if (code != CURLE_OK || *responseCode != 200) {
+                CCLOG("HTTPCLIENT CURL FAILED WITH CODE - %d", code);
+                return false;     
+            }
+        } catch (...) {
+            CCLOG("HTTPCLIENT CURL EXCEPTION!!");
+        }
         // Get some mor data.
         
         return true;
