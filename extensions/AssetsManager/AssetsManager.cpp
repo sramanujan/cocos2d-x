@@ -435,7 +435,8 @@ bool AssetsManager::downLoad()
     curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYHOST , false);
     curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, downLoadPackage);
     curl_easy_setopt(_curl, CURLOPT_WRITEDATA, fp);
-    curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, false);
+    curl_easy_setopt(_curl, CURLOPT_NOSIGNAL, 1);
+	curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, false);
     curl_easy_setopt(_curl, CURLOPT_PROGRESSFUNCTION, assetsManagerProgressFunc);
     curl_easy_setopt(_curl, CURLOPT_PROGRESSDATA, this);
     
