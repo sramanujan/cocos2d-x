@@ -431,7 +431,7 @@ CCHttpClient::~CCHttpClient()
 bool CCHttpClient::lazyInitThreadSemphore()
 {
     if (s_requestQueue != NULL) {
-        return true;
+        return !need_quit;
     } else {
         
         s_requestQueue = new CCArray();
@@ -456,16 +456,16 @@ bool CCHttpClient::lazyInitThreadSemphore()
 }
 
 //Add a get task to queue
-void CCHttpClient::send(CCHttpRequest* request)
+bool CCHttpClient::send(CCHttpRequest* request)
 {    
     if (false == lazyInitThreadSemphore()) 
     {
-        return;
+        return false;
     }
     
     if (!request)
     {
-        return;
+        return false;
     }
         
     ++s_asyncRequestCount;
@@ -478,6 +478,7 @@ void CCHttpClient::send(CCHttpRequest* request)
     
     // Notify thread start to work
     pthread_cond_signal(&s_SleepCondition);
+    return true;
 }
 
 // Poll and notify main thread if responses exists in queue
