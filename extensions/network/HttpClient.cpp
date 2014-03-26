@@ -200,6 +200,7 @@ static void* networkThread(void *data)
         s_responseQueue->addObject(response);
         pthread_mutex_unlock(&s_responseQueueMutex);
         
+        if(!need_quit)
         // resume dispatcher selector
         CCDirector::sharedDirector()->getScheduler()->resumeTarget(CCHttpClient::getInstance());
     }
@@ -441,10 +442,10 @@ bool CCHttpClient::lazyInitThreadSemphore()
         pthread_mutex_init(&s_SleepMutex, NULL);
         pthread_cond_init(&s_SleepCondition, NULL);
 
+        need_quit = false;
+
         pthread_create(&s_networkThread, NULL, networkThread, NULL);
         pthread_detach(s_networkThread);
-        
-        need_quit = false;
     }
     
     return true;
