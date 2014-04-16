@@ -43,14 +43,7 @@ class WsMessage;
 class WebSocket
 {
 public:
-    /**
-     * @js ctor
-     */
     WebSocket();
-    /**
-     *  @js NA
-     *  @lua NA
-     */
     virtual ~WebSocket();
     
     /**
@@ -58,9 +51,10 @@ public:
      */
     struct Data
     {
-        Data():bytes(NULL), len(0), isBinary(false){}
+        Data():bytes(NULL), len(0), issued(0), isBinary(false){}
         char* bytes;
         int len;
+        int issued;
         bool isBinary;
     };
     
@@ -76,8 +70,6 @@ public:
 
     /**
      *  @brief The delegate class to process websocket events.
-     *  @js NA
-     *  @lua NA
      */
     class Delegate
     {
@@ -96,7 +88,6 @@ public:
      *  @param  delegate The delegate which want to receive event from websocket.
      *  @param  url      The URL of websocket server.
      *  @return true: Success, false: Failure
-     *  @js NA
      */
     bool init(const Delegate& delegate,
               const std::string& url,
@@ -150,6 +141,10 @@ private:
     std::string  _host;
     unsigned int _port;
     std::string  _path;
+    
+    int _pendingFrameDataLen;
+    int _currentDataLen;
+    char *_currentData;
     
     friend class WsThreadHelper;
     WsThreadHelper* _wsHelper;
