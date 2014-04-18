@@ -403,8 +403,10 @@ CCHttpClient* CCHttpClient::getInstance()
 void CCHttpClient::destroyInstance()
 {
     CCAssert(s_pHttpClient, "");
-    CCDirector::sharedDirector()->getScheduler()->unscheduleSelector(schedule_selector(CCHttpClient::dispatchResponseCallbacks), s_pHttpClient);
-    s_pHttpClient->release();
+    if(s_pHttpClient) {
+		CCDirector::sharedDirector()->getScheduler()->unscheduleSelector(schedule_selector(CCHttpClient::dispatchResponseCallbacks), s_pHttpClient);
+    	s_pHttpClient->release();
+	}
 }
 
 CCHttpClient::CCHttpClient()
