@@ -501,6 +501,7 @@ void CCScheduler::removeUpdateFromHash(struct _listEntry *entry)
         // list entry
         DL_DELETE(*element->list, element->entry);
         free(element->entry);
+		element->entry = NULL;
 
         // hash entry
         CCObject* pTarget = element->target;
@@ -526,11 +527,11 @@ void CCScheduler::unscheduleUpdateForTarget(const CCObject *pTarget)
     {
         if (m_bUpdateHashLocked)
         {
-            pElement->entry->markedForDeletion = true;
+			if(pElement->entry) pElement->entry->markedForDeletion = true;
         }
         else
         {
-            this->removeUpdateFromHash(pElement->entry);
+			if(pElement->entry) this->removeUpdateFromHash(pElement->entry);
         }
     }
 }

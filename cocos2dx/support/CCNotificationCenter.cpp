@@ -107,7 +107,9 @@ void CCNotificationCenter::removeObserver(CCObject *target,const char *name)
         
         if (!strcmp(observer->getName(),name) && observer->getTarget() == target)
         {
+			observer->retain(); //FIX 1: retain item before removing
             m_observers->removeObject(observer);
+			observer->autorelease(); // FIX 2: then autorelease
             return;
         }
     }
