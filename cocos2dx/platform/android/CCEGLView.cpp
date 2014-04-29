@@ -32,6 +32,7 @@ THE SOFTWARE.
 
 #include <stdlib.h>
 #include <android/log.h>
+#include <EGL/egl.h>
 
 
 
@@ -67,7 +68,9 @@ CCEGLView::~CCEGLView()
 
 bool CCEGLView::isOpenGLReady()
 {
-    return (m_obScreenSize.width != 0 && m_obScreenSize.height != 0);
+    EGLContext context = eglGetCurrentContext();
+    return (m_obScreenSize.width != 0 && m_obScreenSize.height != 0 &&
+            context != EGL_NO_CONTEXT);
 }
 
 void CCEGLView::end()
