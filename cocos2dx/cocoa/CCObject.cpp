@@ -38,8 +38,7 @@ CCObject* CCCopying::copyWithZone(CCZone *pZone)
 }
 
 CCObject::CCObject(void)
-: m_nLuaID(0)
-, m_uReference(1) // when the object is created, the reference count of it is 1
+: m_uReference(1) // when the object is created, the reference count of it is 1
 , m_uAutoReleaseCount(0)
 {
     static unsigned int uObjectCount = 0;
@@ -57,17 +56,10 @@ CCObject::~CCObject(void)
     }
 
     // if the object is referenced by Lua engine, remove it
-    if (m_nLuaID)
+    CCScriptEngineProtocol* pEngine = CCScriptEngineManager::sharedManager()->getScriptEngine();
+    if (pEngine != NULL && pEngine->getScriptType() == kScriptTypeJavascript)
     {
-        CCScriptEngineManager::sharedManager()->getScriptEngine()->removeScriptObjectByCCObject(this);
-    }
-    else
-    {
-        CCScriptEngineProtocol* pEngine = CCScriptEngineManager::sharedManager()->getScriptEngine();
-        if (pEngine != NULL && pEngine->getScriptType() == kScriptTypeJavascript)
-        {
-            pEngine->removeScriptObjectByCCObject(this);
-        }
+        pEngine->removeScriptObjectByCCObject(this);
     }
 }
 

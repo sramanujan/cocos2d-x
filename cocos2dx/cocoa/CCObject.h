@@ -43,26 +43,17 @@ class CCObject;
 class CCNode;
 class CCEvent;
 
-/**
- * @js NA
- * @lua NA
- */
 class CC_DLL CCCopying
 {
 public:
     virtual CCObject* copyWithZone(CCZone* pZone);
 };
 
-/**
- * @js NA
- */
 class CC_DLL CCObject : public CCCopying
 {
 public:
     // object id, CCScriptSupport need public m_uID
     unsigned int        m_uID;
-    // Lua reference id
-    int                 m_nLuaID;
 protected:
     // count of references
     unsigned int        m_uReference;
@@ -70,9 +61,6 @@ protected:
     unsigned int        m_uAutoReleaseCount;
 public:
     CCObject(void);
-    /**
-     *  @lua NA
-     */
     virtual ~CCObject(void);
     
     void release(void);

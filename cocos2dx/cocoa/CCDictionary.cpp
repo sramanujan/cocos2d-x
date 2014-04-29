@@ -38,16 +38,20 @@ CCDictElement::CCDictElement(const char* pszKey, CCObject* pObject)
 {
     CCAssert(pszKey && strlen(pszKey) > 0, "Invalid key value.");
     m_iKey = 0;
-    const char* pStart = pszKey;
+//    const char* pStart = pszKey;
+//    
+//    int len = strlen(pszKey);
+//    if (len > MAX_KEY_LEN )
+//    {
+//        char* pEnd = (char*)&pszKey[len-1];
+//        pStart = pEnd - (MAX_KEY_LEN-1);
+//    }
+//    
+//    strcpy(m_szKey, pStart);
     
-    int len = strlen(pszKey);
-    if (len > MAX_KEY_LEN )
-    {
-        char* pEnd = (char*)&pszKey[len-1];
-        pStart = pEnd - (MAX_KEY_LEN-1);
-    }
-    
-    strcpy(m_szKey, pStart);
+    m_szKey = (char *)malloc(sizeof(char) * (strlen(pszKey) + 1));
+    if(m_szKey)
+        strcpy(m_szKey, pszKey);
     
     m_pObject = pObject;
     memset(&hh, 0, sizeof(hh));
@@ -55,7 +59,9 @@ CCDictElement::CCDictElement(const char* pszKey, CCObject* pObject)
 
 CCDictElement::CCDictElement(intptr_t iKey, CCObject* pObject)
 {
-    m_szKey[0] = '\0';
+    m_szKey = (char *)malloc(sizeof(char));
+    if(m_szKey)
+        m_szKey[0] = '\0';
     m_iKey = iKey;
     m_pObject = pObject;
     memset(&hh, 0, sizeof(hh));
@@ -63,7 +69,10 @@ CCDictElement::CCDictElement(intptr_t iKey, CCObject* pObject)
 
 CCDictElement::~CCDictElement()
 {
-
+    if (m_szKey)
+    {
+        free(m_szKey);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -291,7 +300,8 @@ void CCDictionary::setObjectUnSafe(CCObject* pObject, const std::string& key)
 {
     pObject->retain();
     CCDictElement* pElement = new CCDictElement(key.c_str(), pObject);
-    HASH_ADD_STR(m_pElements, m_szKey, pElement);
+//    HASH_ADD_STR(m_pElements, m_szKey, pElement);
+    HASH_ADD_KEYPTR(hh,m_pElements,pElement->m_szKey,strlen(pElement->m_szKey),pElement);
 }
 
 void CCDictionary::setObjectUnSafe(CCObject* pObject, const intptr_t key)
@@ -327,9 +337,9 @@ void CCDictionary::removeAllObjects()
     HASH_ITER(hh, m_pElements, pElement, tmp) 
     {
         HASH_DEL(m_pElements, pElement);
+        
         pElement->m_pObject->release();
         CC_SAFE_DELETE(pElement);
-
     }
 }
 
